@@ -375,6 +375,180 @@ format SQL rõ ràng
 code chạy đúng hoàn toàn
 Lưu ý: Chỉ tính điểm khi thực hiện đúng theo yêu cầu
 
+CREATE DATABASE  Booking_holtel;
+USE Booking_holtel;
+
+-- PHẦN 1: THIẾT KẾ CSDL & CHÈN DỮ LIỆU
+
+CREATE TABLE Guests(
+	guest_id INT PRIMARY KEY AUTO_INCREMENT, -- mã khách lưu trú
+    full_name VARCHAR(50) NOT NULL,  -- Tên khách hàng
+    email	VARCHAR(100) NOT NULl UNIQUE, -- Email khách hàng
+    phone	VARCHAR(20) NOT NULL UNIQUE, -- Số điện thoại
+    loyalty_points DECIMAL(10) DEFAULT 0 CHECK (loyalty_points >= 0) -- Điểm tích lũy
+);
+
+CREATE TABLE Guest_Profiles(
+	profile_id VARCHAR(5) PRIMARY KEY, -- Mã hồ sơ
+	guest_id INT AUTO_INCREMENT,	 -- Mã khách hàng
+	address VARCHAR(100) NOT NULL,  	-- Địa chỉ khách hàng
+	birthday DATE NOT NULL,				-- Ngày tháng năm sinh
+	national_id VARCHAR(20) NOT NULL UNIQUE, -- Số căn cước
+    FOREIGN KEY (guest_id) REFERENCES Guests(guest_id)
+);
+
+CREATE TABLE Rooms(
+	room_id INT PRIMARY KEY AUTO_INCREMENT, -- Mã phòng
+    room_name VARCHAR(100) NOT NULL,	-- Tên phòng
+    room_type	ENUM ('Standard', 'Deluxe', 'Suite'), -- Loại phòng
+    price_per_night DECIMAL (10,2) NOT NULL CHECK (price_per_night > 0), -- Giá phòng 1 đêm
+    room_status ENUM ('Available', 'Occupied', 'Maintenance') -- Trạng thái phòng
+);
+
+CREATE TABLE Bookings(
+	booking_id VARCHAR(5) PRIMARY KEY, -- Mã đặt phòng
+    guest_id INT AUTO_INCREMENT, -- Mã khách hàng
+    check_in_date	DATETIME NOT NULL, -- Ngày giờ nhận phòng
+    check_out_date DATETIME NOT NULL CHECK(check_out_date > check_in_date), -- Ngày giờ trả phòng
+    total_charge DECIMAL(10,2) NOT NULL CHECK (total_charge > 0), -- Tổng chi phí
+    booking_status ENUM ('Pending', 'Completed', 'Cancelled'), -- Trạng thái phòng
+    room_id INT AUTO_INCREMENT, -- Mã phòng
+    FOREIGN KEY (room_id) REFERENCES  Rooms(room_id),
+    FOREIGN KEY (guest_id) REFERENCES  Guests(guest_id)
+);
+
+CREATE TABLE  Room_Log(
+	log_id INT PRIMARY KEY AUTO_INCREMENT, -- Mã nhật ký biến động phòng
+    room_id	INT PRIMARY KEY AUTO_INCREMENT, -- Mã phòng
+    action_type ENUM ('Check-in', 'Check-out', 'Maintenance', 'Cancelled'), -- Loại hành động
+    change_note VARCHAR(100) NOT NULL, -- Lý do thay đổi
+    logged_at datetime , -- Thời điểm ghi nhận
+    FOREIGN KEY (room_id)  REFERENCES Rooms(room_id)
+);
+
+INSERT INTO Guests(guest_id, full_name, email, phone, loyalty_points)
+VALUES
+	(1, 'Nguyen Van A', 'anv@gmail.com', '901234567', '150'),
+    (2, 'Tran Thi B', 'btt@gmail.com', '912345678', '500'),
+    (3, 'Le Van C', 'cle@yahoo.com', '922334455', '0'),
+    (4, 'Pham Minh D', 'dpham@hotmail.com', '933445566', '1000'),
+    (5, 'Hoang Anh E', 'ehoang@gmail.com', '944556677', '20');
+    
+INSERT INTO  Guest_Profiles(profile_id, guest_id, address, birthday, national_id)
+VALUES 
+	(101, 1, '123 Le Loi, Q1, HCM', '1990/5/15', 12345),
+    (102, 2, '456 Nguyen Hue, Q1, HCM', '1985/10/20', 23456),
+    (103, 3, '789 Phan Chu Trinh, Da Nang', '1995/12/1', 34567),
+    (104, 4, '101 Hoang Hoa Tham, Ha Noi', '1988/3/25', 45678),
+    (105, 5, '202 Tran Hung Dao, Can Tho', '2000/7/10', 56789);
+    
+INSERT INTO Rooms(room_id, room_name, room_type, price_per_night, room_status)
+VALUES 
+	(1, 'Room 101', 'Standard', 100000, 'Available'),
+    (2, 'Room 202', 'Deluxe', 5000000, 'Occupied'),
+    (3, 'Room 303', 'Suite', 300000, 'Available'),
+    (4, 'Room 104', 'Standard', 200000, 'Occupied'),
+    (5, 'Room 205', 'Deluxe', 2000000, 'Maintenance');
+    
+INSERT INTO Bookings (booking_id, guest_id, check_in_date, check_out_date, total_charge, booking_status, room_id)
+VALUES 
+	(1001, 1, '2023/11/1 5 10:30', '2023 /11/18 12:00', 300000, 'Completed', 1),
+    (1002, 2, '2023/12/1 14:20', '2023/12/4 12:00', 20000000, 'Completed', 2),
+    (1003, 1, '2021/1/10  9:15', '2021/1/11 12:00', 5000000, 'Pending', 2),
+    (1004, 3, '2023/5/20  16:45', '2023/5/22 12:00', 900000, 'Cancelled', 3),
+    (1005, 4, '2024/1/18 11:00', '2024/1/20 12:00', 8000000, 'Completed', 4);
+    
+INSERT INTO Room_Log (log_id, room_id, action_type, change_note, logged_at)
+VALUES 
+(1, 1, 'Check-in','Guest checked in', '2023/10/1 8:00'),
+(2, 1, 'Check-out','Guest checked out', '2023/11/15 10:35'),
+(3, 4, 'Maintenance','Room reported as damaged', '2023/11/20 15:00'),
+(4, 2, 'Check-in','New guest arrival', '2023/11/25 9:00'),
+(5, 3, 'Maintenance','Schedule maintenance', '2023/12/1 13:00');
+
+UPDATE Guests
+SET loyalty_points = loyalty_points + 200
+WHERE email LIKE '%@gmail.com';
+
+DELETE 
+FROM Room_Log 
+WHERE logged_at < '10/11/2023';
+
+-- PHẦN 2: TRUY VẤN DỮ LIỆU CƠ BẢN
+-- câu 1:
+SELECT 
+	room_name, 
+    price_per_night, 
+    room_status
+FROM Rooms
+WHERE price_per_night > 1000000 OR room_status = 'Maintenance'  OR room_type = 'Suite';
+
+-- câu 2:
+SELECT 
+	full_name, 
+    email
+FROM Guests
+WHERE  email LIKE '%@gmail.com' AND loyalty_points BETWEEN 50 AND 300;
+
+-- câu 3: 
+SELECT 
+	booking_id, 
+    guest_id, 
+    check_in_date, 
+    check_out_date, 
+    total_charge, 
+    booking_status, 
+    room_id
+FROM Bookings
+ORDER BY total_charge DESC
+LIMIT 3 OFFSET 1;
+
+-- PHẦN 3: TRUY VẤN DỮ LIỆU NÂNG CAO
+
+-- câu 1:
+
+SELECT 
+	g.full_name,
+	gp.national_id,
+	b.booking_id,
+	b.check_in_date,
+	b.total_charge
+FROM Guests g
+INNER JOIN Guest_Profiles gp
+ON g.guest_id = gp.guest_id
+INNER JOIN Bookings b
+ON g.guest_id = b.guest_id;
+
+-- câu 2
+SELECT
+	g.full_name,
+	SUM(b.total_charge)
+FROM Guests g
+INNER JOIN Bookings b
+GROUP BY g.full_name, g.guest_id
+HAVING b.total_charge > 20000000;
+
+-- PHẦN 4: INDEX VÀ VIEW
+
+CREATE INDEX  idx_booking_status_cgh ON
+INSERT INTO (booking_status,check_in_date);
+
+CREATE VIEW vw_guest_booking_stats AS
+INSERT INTO
+
+-- PHẦN 5: TRIGGER 
+
+-- câu 1:
+DELIMITER //
+
+CREATE TRIGGER trg_after_update_booking_status 
+AFTER UPDATE ON booking_status
+FOR EACH ROW 
+
+BEGIN
+	
+END //
+	
 
 
 
